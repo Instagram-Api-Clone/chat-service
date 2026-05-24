@@ -34,6 +34,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
@@ -55,7 +56,7 @@ tasks.named('test') {
 
 jib {
 	to {
-		image = "docker.io/hemantvashist/instagram_app-${project.name}"
+		image = "docker.io/hemantvashist/instagram_app-${project.name}-v3"
 		tags = [project.version.toString(), 'latest']
 	}
 }

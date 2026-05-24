@@ -3,6 +3,7 @@ package com.hemant.instagram.chat_service.controller;
 import com.hemant.instagram.chat_service.dto.request.CreateChatRequest;
 import com.hemant.instagram.chat_service.dto.response.ChatResponse;
 import com.hemant.instagram.chat_service.service.ChatService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class ChatController {
 
 	private final ChatService chatService;
 
+	@Operation(summary = "Start Chat")
 	@PostMapping
 	public ResponseEntity<ChatResponse> startChat(
 			@RequestHeader("X-User-Id") Long requesterId,
@@ -32,6 +34,7 @@ public class ChatController {
 		return new ResponseEntity<>(chatService.startChat(requesterId, request.getTargetUserId()), HttpStatus.CREATED);
 	}
 
+	@Operation(summary = "Get User Chats")
 	@GetMapping
 	public ResponseEntity<Page<ChatResponse>> getUserChats(
 			@RequestHeader("X-User-Id") Long requesterId,
@@ -40,6 +43,7 @@ public class ChatController {
 		return ResponseEntity.ok(chatService.getUserChats(requesterId, page, size));
 	}
 
+	@Operation(summary = "Delete Chat")
 	@DeleteMapping("/users/{targetUserId}")
 	public ResponseEntity<Void> deleteChat(
 			@RequestHeader("X-User-Id") Long requesterId,

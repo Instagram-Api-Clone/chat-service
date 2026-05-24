@@ -3,6 +3,7 @@ package com.hemant.instagram.chat_service.controller;
 import com.hemant.instagram.chat_service.dto.request.SendMessageRequest;
 import com.hemant.instagram.chat_service.dto.response.ChatMessageResponse;
 import com.hemant.instagram.chat_service.service.ChatMessageService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class ChatMessageController {
 
 	private final ChatMessageService chatMessageService;
 
+	@Operation(summary = "Send Message")
 	@PostMapping("/users/{receiverId}")
 	public ResponseEntity<ChatMessageResponse> sendMessage(
 			@RequestHeader("X-User-Id") Long senderId,
@@ -33,6 +35,7 @@ public class ChatMessageController {
 		return new ResponseEntity<>(chatMessageService.sendMessage(senderId, receiverId, request), HttpStatus.CREATED);
 	}
 
+	@Operation(summary = "Get Chat Messages")
 	@GetMapping("/users/{receiverId}")
 	public ResponseEntity<Page<ChatMessageResponse>> getChatMessages(
 			@RequestHeader("X-User-Id") Long requesterId,
@@ -42,6 +45,7 @@ public class ChatMessageController {
 		return ResponseEntity.ok(chatMessageService.getChatMessages(requesterId, receiverId, page, size));
 	}
 
+	@Operation(summary = "Search Messages")
 	@GetMapping("/users/{receiverId}/search")
 	public ResponseEntity<Page<ChatMessageResponse>> searchMessages(
 			@RequestHeader("X-User-Id") Long requesterId,
@@ -52,6 +56,7 @@ public class ChatMessageController {
 		return ResponseEntity.ok(chatMessageService.searchMessages(requesterId, receiverId, keyword, page, size));
 	}
 
+	@Operation(summary = "Delete Message")
 	@DeleteMapping("/{messageId}")
 	public ResponseEntity<Void> deleteMessage(
 			@RequestHeader("X-User-Id") Long requesterId,
