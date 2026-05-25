@@ -54,6 +54,8 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+apply from: 'newrelic.gradle'
+
 jib {
 	to {
 		image = "docker.io/hemantvashist/instagram_app-${project.name}-v3"

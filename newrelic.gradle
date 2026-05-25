@@ -1,0 +1,90 @@
+// ============================================================
+// newrelic.gradle
+// Apply this file in your build.gradle with:
+//   apply from: 'newrelic.gradle'
+//
+// Pass secrets at runtime — never hardcode them:
+//   NEW_RELIC_LICENSE_KEY=your_key
+//   NEW_RELIC_APP_NAME=your_app_name
+// ============================================================
+
+// ------------------------------------------------------------
+// 1. Configurations
+//    Uses Gradle 9's proper factory methods:
+//      - dependencyScope() for declaring deps (not resolvable)
+//      - resolvable() for resolving the JAR at build time
+//    Both opt out of dependency locking to avoid errors from
+//    lockAllConfigurations() in the main build.gradle.
+// ------------------------------------------------------------
+configurations.dependencyScope("newrelicDeps") {
+}
+
+configurations.resolvable("newrelic") {
+    extendsFrom configurations.newrelicDeps
+}
+
+// ------------------------------------------------------------
+// 2. Dependency — pin to a specific version for reproducibility
+// ------------------------------------------------------------
+dependencies {
+    newrelicDeps "com.newrelic.agent.java:newrelic-agent:9.+"
+}
+
+// ------------------------------------------------------------
+// 3. Task: copy agent JAR into build/newrelic/newrelic.jar
+//    Uses layout.buildDirectory (replaces deprecated $buildDir)
+// ------------------------------------------------------------
+def newrelicDir = layout.buildDirectory.dir("newrelic")
+
+tasks.register("copyNewRelicAgent", Copy) {
+    description = "Copies the New Relic Java agent JAR into the build directory."
+    group = "New Relic"
+
+    from configurations.newrelic
+    into newrelicDir
+    rename { "newrelic.jar" }
+}
+
+// ------------------------------------------------------------
+// 4. Wire into Jib tasks (lazy references — Gradle 9 safe)
+// ------------------------------------------------------------
+plugins.withId("com.google.cloud.tools.jib") {
+    tasks.named("jib") { dependsOn("copyNewRelicAgent") }
+    tasks.named("jibDockerBuild") { dependsOn("copyNewRelicAgent") }
+    tasks.named("jibBuildTar") { dependsOn("copyNewRelicAgent") }
+
+    // ------------------------------------------------------------
+    // 5. Jib container config
+    //    extraDirectories copies two things into /app/newrelic/:
+    //      - newrelic.jar  (from build/newrelic/ via copyNewRelicAgent)
+    //      - newrelic.yml  (from src/main/jib/app/newrelic/ explicitly)
+    //    -Dnewrelic.config.file tells the agent exactly where the
+    //    yml is, so there's no ambiguity.
+    // ------------------------------------------------------------
+    jib {
+        container {
+            jvmFlags = [
+                    "-javaagent:/app/newrelic/newrelic.jar",
+                    "-Dnewrelic.config.file=/app/newrelic/newrelic.yml"
+            ]
+            environment = [
+                    NEW_RELIC_LOG_FILE_NAME: "STDOUT",
+                    NEW_RELIC_LOG_LEVEL    : "info"
+            ]
+        }
+        extraDirectories {
+            paths {
+                // Copies build/newrelic/newrelic.jar → /app/newrelic/
+                path {
+                    from = newrelicDir
+                    into = "/app/newrelic"
+                }
+                // Explicitly copies newrelic.yml → /app/newrelic/
+                path {
+                    from = file("src/main/jib/app/newrelic")
+                    into = "/app/newrelic"
+                }
+            }
+        }
+    }
+}
